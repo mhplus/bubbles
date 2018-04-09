@@ -8,28 +8,44 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class CoverFlowView extends View {
+import java.util.ArrayList;
+
+public class StageView extends View {
     private static final String TAG = "CoverFlowView";
 
-//    private Paint mPaint = new Paint();
     private Paint mHQPaint = new Paint();
 
-    public CoverFlowView(Context context) {
+    private Bubble mBubble;
+    private BubbleLauncher mBubbleLauncher;
+    private ArrayList<StaticDrawable> mStaticDrawables = new ArrayList<>();
+
+
+    public StageView(Context context) {
         this(context, null, 0);
     }
 
-    public CoverFlowView(Context context, AttributeSet attrs) {
+    public StageView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public CoverFlowView(Context context, AttributeSet attrs, int defStyle) {
+    public StageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         setHapticFeedbackEnabled(false);
-//        mPaint.setAntiAlias(false);
-//        mPaint.setFilterBitmap(false);
 
         mHQPaint.setAntiAlias(true);
         mHQPaint.setFilterBitmap(true);
+        int borderColor = getResources().getColor(R.color.colorAccent, null);
+        mStaticDrawables.add(new StaticDrawable(
+                0, 2000, 1440, 10, null, borderColor));
+        mStaticDrawables.add(new StaticDrawable(
+                0, 0, 1440, 10, null, borderColor));
+        mStaticDrawables.add(new StaticDrawable(
+                0, 0, 10, 2000, null, borderColor));
+        mStaticDrawables.add(new StaticDrawable(
+                1430, 0, 10, 2000, null, borderColor));
+
+        mBubble = new Bubble(context, 720, 2200, 100, R.drawable.bubble);
+        mBubbleLauncher = new BubbleLauncher();
     }
 
     @Override
@@ -41,8 +57,11 @@ public class CoverFlowView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         //canvas.translate(mScrollX, 0);
-        mHQPaint.setColor(getResources().getColor(R.color.colorPrimary, null));
-        canvas.drawCircle(100, 100, 50, mHQPaint);
+        for (StaticDrawable d: mStaticDrawables) {
+            d.draw(canvas);
+        }
+        mBubbleLauncher.draw(canvas);
+        mBubble.draw(canvas);
     }
 
     @Override
@@ -58,19 +77,30 @@ public class CoverFlowView extends View {
     public boolean onTouchEvent(MotionEvent ev) {
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
 
+        int x = (int) ev.getX();
+        int y = (int) ev.getY();
+        Log.d(TAG, "onTouchEvent x=" + x + ", y=" + y);
         switch (action) {
         case MotionEvent.ACTION_DOWN:
-            break;
+            mBubble.moveTo(x, y);
+            invalidate();
+            return true;
+        case MotionEvent.ACTION_MOVE:
+            mBubble.moveTo(x, y);
+            invalidate();
+            return true;
         case MotionEvent.ACTION_UP:
         case MotionEvent.ACTION_CANCEL:
             performClick();
-            break;
+            return true;
         }
         return super.onTouchEvent(ev);
     }
 
     @Override
     public boolean performClick() {
+        Log.d(TAG, "Clicked");
         return super.performClick();
     }
+
 }
