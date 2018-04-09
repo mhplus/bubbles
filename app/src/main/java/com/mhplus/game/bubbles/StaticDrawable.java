@@ -15,28 +15,21 @@ public class StaticDrawable extends Drawable {
     private int mPosY;
     private int mWidth;
     private int mHeight;
-    private Bitmap mBitmap;
     private Paint mPaint = new Paint();
 
     @SuppressLint("ResourceAsColor")
-    public StaticDrawable(int x, int y, int width, int height, Bitmap bitmap, int color) {
+    public StaticDrawable(int x, int y, int width, int height, int color) {
         super();
         mPosX = x;
         mPosY = y;
         mWidth = width;
         mHeight = height;
-        mBitmap = bitmap;
-//        mPaint.setAntiAlias(false);
-//        mPaint.setFilterBitmap(false);
         mPaint.setColor(color);
     }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
         canvas.drawRect(mPosX, mPosY, mPosX + mWidth , mPosY + mHeight, mPaint);
-        if (mBitmap != null) {
-            canvas.drawBitmap(mBitmap, 0, 0, null);
-        }
     }
 
     @Override
