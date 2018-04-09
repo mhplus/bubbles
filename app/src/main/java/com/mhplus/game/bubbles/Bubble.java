@@ -5,11 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 
-public class Bubble {
+class Bubble {
     private int mPosX;
     private int mPosY;
     private int mRadius;
-    Drawable mDrawable;
+    private Drawable mDrawable;
 
     Bubble(Context context, int x, int y, int r, int id) {
         mPosX = x;
@@ -18,13 +18,13 @@ public class Bubble {
         mDrawable = ContextCompat.getDrawable(context, id);
     }
 
-    public void draw(Canvas canvas) {
+    void draw(Canvas canvas) {
         mDrawable.setBounds(mPosX - mRadius, mPosY - mRadius,
                 mPosX + mRadius, mPosY + mRadius);
         mDrawable.draw(canvas);
     }
 
-    public void moveTo(int x, int y) {
+    void moveTo(int x, int y) {
         mPosX = x;
         mPosY = y;
     }

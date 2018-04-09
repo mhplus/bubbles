@@ -1,7 +1,6 @@
 package com.mhplus.game.bubbles;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
@@ -18,7 +17,7 @@ public class StaticDrawable extends Drawable {
     private Paint mPaint = new Paint();
 
     @SuppressLint("ResourceAsColor")
-    public StaticDrawable(int x, int y, int width, int height, int color) {
+    StaticDrawable(int x, int y, int width, int height, int color) {
         super();
         mPosX = x;
         mPosY = y;

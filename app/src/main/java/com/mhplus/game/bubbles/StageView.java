@@ -2,13 +2,14 @@ package com.mhplus.game.bubbles;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.animation.Interpolator;
+import android.widget.OverScroller;
 
 import java.util.ArrayList;
 
@@ -17,11 +18,26 @@ public class StageView extends View {
 
     private VelocityTracker mTracker;
     private Bubble mBubble;
-    private BubbleLauncher mBubbleLauncher;
     private ArrayList<StaticDrawable> mStaticDrawables = new ArrayList<>();
     private int mMaximumVelocity;
     private int mActivePointerId;
-    private Handler mHandler;
+
+    private OverScroller mScroller;
+    private static class OvershootInterpolator implements Interpolator {
+        private static final float DEFAULT_TENSION = 1.0f;
+        private float mTension;
+
+        OvershootInterpolator() {
+            mTension = DEFAULT_TENSION;
+        }
+
+        public float getInterpolation(float t) {
+            // _o(t) = t * t * ((tension + 1) * t + tension)
+            // o(t) = _o(t - 1) + 1
+            t -= 1.0f;
+            return t * t * ((mTension + 1) * t + mTension) + 1.0f;
+        }
+    }
 
     public StageView(Context context) {
         this(context, null, 0);
@@ -34,7 +50,8 @@ public class StageView extends View {
     public StageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         //setHapticFeedbackEnabled(false);
-        mHandler = new Handler();
+        //Handler mHandler = new Handler();
+        mScroller = new OverScroller(context, new OvershootInterpolator());
 
         final ViewConfiguration conf = ViewConfiguration.get(getContext());
         mMaximumVelocity = conf.getScaledMaximumFlingVelocity();
@@ -50,7 +67,6 @@ public class StageView extends View {
                 1430, 0, 10, 2000, borderColor));
 
         mBubble = new Bubble(context, 720, 2200, 100, R.drawable.bubble);
-        mBubbleLauncher = new BubbleLauncher();
     }
 
     @Override
@@ -60,12 +76,20 @@ public class StageView extends View {
     }
 
     @Override
+    public void computeScroll() {
+        mScroller.computeScrollOffset();
+        //int x = mScroller.getCurrX();
+        //int y = mScroller.getCurrY();
+        //Log.i(TAG, "computeScroll scroll X=" + x + ", y=" + y);
+        //postInvalidate();
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         //canvas.translate(mScrollX, 0);
         for (StaticDrawable d: mStaticDrawables) {
             d.draw(canvas);
         }
-        mBubbleLauncher.draw(canvas);
         mBubble.draw(canvas);
     }
 
@@ -102,6 +126,11 @@ public class StageView extends View {
             int velocityX = (int) mTracker.getXVelocity(mActivePointerId);
             int velocityY = (int) mTracker.getYVelocity(mActivePointerId);
             Log.i(TAG, "ACTION_UP velocityX=" + velocityX + ", velocityY=" + velocityY);
+            mScroller.fling(x, y,
+                    velocityX, velocityY,
+                    0, 1440,
+                    0, 2200,
+                    0, 0);
             performClick();
             return true;
         }
@@ -113,5 +142,4 @@ public class StageView extends View {
         Log.d(TAG, "Clicked");
         return super.performClick();
     }
-
 }
