@@ -1,7 +1,10 @@
 package com.mhplus.game.bubbles;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -16,11 +19,19 @@ import java.util.ArrayList;
 public class StageView extends View {
     private static final String TAG = "CoverFlowView";
 
+    private static final float DECELERATION = 0.85F;
+
     private VelocityTracker mTracker;
     private Bubble mBubble;
     private ArrayList<StaticDrawable> mStaticDrawables = new ArrayList<>();
     private int mMaximumVelocity;
     private int mActivePointerId;
+    private int mVelocityX;
+    private int mVelocityY;
+
+    private int mPosX;
+    private int mPosY;
+    private AnimationHandler mHandler;
 
     private OverScroller mScroller;
     private static class OvershootInterpolator implements Interpolator {
@@ -50,7 +61,7 @@ public class StageView extends View {
     public StageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         //setHapticFeedbackEnabled(false);
-        //Handler mHandler = new Handler();
+        mHandler = new AnimationHandler();
         mScroller = new OverScroller(context, new OvershootInterpolator());
 
         final ViewConfiguration conf = ViewConfiguration.get(getContext());
@@ -102,6 +113,38 @@ public class StageView extends View {
         setMeasuredDimension(width, height);
     }
 
+    private static final int INVALIDATED = 0;
+    private static final int ANIMATION_FINISHED = 1;
+    @SuppressLint("HandlerLeak")
+    private class AnimationHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case INVALIDATED:
+                mVelocityX *= DECELERATION;
+                mVelocityY *= DECELERATION;
+                int dx = (int)(mVelocityX * 0.016);
+                int dy = (int)(mVelocityY * 0.016);
+                if (dx == 0 && dy == 0) {
+                    sendEmptyMessageDelayed(ANIMATION_FINISHED, 200);
+                    break;
+                }
+                mPosX += dx;
+                mPosY += dy;
+                Log.d(TAG, "handleMessage Bubble position : X=" + mPosX +", Y=" + mPosY);
+                mBubble.moveTo(mPosX, mPosY);
+                postInvalidate();
+                sendEmptyMessageDelayed(INVALIDATED, 1000 / 60);
+                break;
+            case ANIMATION_FINISHED:
+                mBubble.moveTo(720, 2200);
+                postInvalidate();
+            default:
+                break;
+            }
+        }
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         final int action = ev.getAction() & MotionEvent.ACTION_MASK;
@@ -114,10 +157,14 @@ public class StageView extends View {
         case MotionEvent.ACTION_DOWN:
             mBubble.moveTo(x, y);
             mActivePointerId = ev.getPointerId(0);
+            mPosX = x;
+            mPosY = y;
             invalidate();
             return true;
         case MotionEvent.ACTION_MOVE:
             mBubble.moveTo(x, y);
+            mPosX = x;
+            mPosY = y;
             invalidate();
             return true;
         case MotionEvent.ACTION_UP:
@@ -126,12 +173,15 @@ public class StageView extends View {
             int velocityX = (int) mTracker.getXVelocity(mActivePointerId);
             int velocityY = (int) mTracker.getYVelocity(mActivePointerId);
             Log.i(TAG, "ACTION_UP velocityX=" + velocityX + ", velocityY=" + velocityY);
+            mVelocityX = velocityX;
+            mVelocityY = velocityY;
             mScroller.fling(x, y,
                     velocityX, velocityY,
                     0, 1440,
                     0, 2200,
                     0, 0);
             performClick();
+            mHandler.sendEmptyMessage(INVALIDATED);
             return true;
         }
         return super.onTouchEvent(ev);
