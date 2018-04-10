@@ -8,7 +8,7 @@ import android.util.Log;
 
 class Bubble {
     private static final String TAG = "Bubble";
-    private static final float DECELERATION = 0.85F;
+    private static final float DECELERATION = 3.0F;
 
     private int mPosX;
     private int mPosY;
@@ -17,6 +17,7 @@ class Bubble {
 
     private int mVelocityX;
     private int mVelocityY;
+    private long mUpdatedTime = -1;
 
     Bubble(Context context, int x, int y, int r, int id) {
         mPosX = x;
@@ -65,16 +66,30 @@ class Bubble {
         }
     }
 
-    void run(int vx, int vy) {
+    void run(int vx, int vy, long updatedTime) {
         mVelocityX = vx;
         mVelocityY = vy;
+        mUpdatedTime = updatedTime;
     }
 
     void updateState() {
-        mVelocityX *= DECELERATION;
-        mVelocityY *= DECELERATION;
-        int dx = (int)(mVelocityX * 0.016);
-        int dy = (int)(mVelocityY * 0.016);
+        long current = System.currentTimeMillis();
+        long dt = current - mUpdatedTime;
+        if (dt == 0) {
+            return;
+        }
+        Log.d(TAG, "updateState mUpdatedTime=" + mUpdatedTime + ", current=" + current + ", dt=" + dt);
+        mUpdatedTime = current;
+        float rate = (DECELERATION * dt) / 1000.F;
+        Log.d(TAG, "handleMessage rate=" + rate + ", vx=" + mVelocityX + ", vy=" + mVelocityY);
+        mVelocityX -= (int) (mVelocityX * rate);
+        mVelocityY -= (int) (mVelocityY * rate);
+        int dx = (int)(mVelocityX * dt / 1000.F);
+        int dy = (int)(mVelocityY * dt / 1000.F);
+        if (dx == 0 && dy == 0) {
+            mVelocityX = 0;
+            mVelocityY = 0;
+        }
         moveTo(mPosX + dx, mPosY + dy);
         Log.d(TAG, "handleMessage Bubble position : X=" + mPosX +", Y=" + mPosY);
     }

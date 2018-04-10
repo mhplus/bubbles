@@ -135,7 +135,7 @@ public class StageView extends View {
         int x = (int) ev.getX();
         int y = (int) ev.getY();
         mTracker.addMovement(ev);
-        Log.d(TAG, "onTouchEvent x=" + x + ", y=" + y);
+//        Log.d(TAG, "onTouchEvent x=" + x + ", y=" + y);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mActivePointerId = ev.getPointerId(0);
@@ -164,7 +164,7 @@ public class StageView extends View {
             int velocityX = (int) mTracker.getXVelocity(mActivePointerId);
             int velocityY = (int) mTracker.getYVelocity(mActivePointerId);
             Log.i(TAG, "ACTION_UP velocityX=" + velocityX + ", velocityY=" + velocityY);
-            mBubble.run(velocityX, velocityY);
+            mBubble.run(velocityX, velocityY, System.currentTimeMillis());
             performClick();
             mHandler.sendEmptyMessage(INVALIDATED);
             return true;
