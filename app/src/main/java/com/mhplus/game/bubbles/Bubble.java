@@ -8,7 +8,7 @@ import android.util.Log;
 
 class Bubble {
     private static final String TAG = "Bubble";
-    private static final float DECELERATION = 3.0F;
+    private static final float DECELERATION = 2.0F;
 
     private int mPosX;
     private int mPosY;
@@ -93,7 +93,6 @@ class Bubble {
         moveTo(mPosX + dx, mPosY + dy);
         Log.d(TAG, "handleMessage Bubble position : X=" + mPosX +", Y=" + mPosY);
     }
-
     boolean isMoving() {
         return mVelocityX != 0 || mVelocityY != 0;
     }
@@ -101,12 +100,16 @@ class Bubble {
     void draw(Canvas canvas) {
         mDrawable.setBounds(mPosX - mRadius, mPosY - mRadius,
                 mPosX + mRadius, mPosY + mRadius);
-        mDrawable.setAlpha((int)(256 * 0.8));
+        mDrawable.setAlpha((int)(256 * 0.5));
         mDrawable.draw(canvas);
     }
 
     void moveTo(int x, int y) {
         mPosX = x;
         mPosY = y;
+    }
+
+    void increaseRadius() {
+        mRadius += 8;
     }
 }

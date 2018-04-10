@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class StageView extends View {
     private static final String TAG = "CoverFlowView";
@@ -20,10 +21,12 @@ public class StageView extends View {
     private boolean mIsClearing = false;
     private VelocityTracker mTracker;
     private Bubble mBubble;
+    private Bubble mExpanding;
     private ArrayList<Border> mBorders = new ArrayList<>();
     private ArrayList<Bubble> mBubbles = new ArrayList<>();
     private int mMaximumVelocity;
     private int mActivePointerId;
+    private int mColorIndex;
 
     private AnimationHandler mHandler;
     private Context mContext;
@@ -89,6 +92,7 @@ public class StageView extends View {
 
     private static final int INVALIDATED = 0;
     private static final int ANIMATION_FINISHED = 1;
+    private static final int EXPAND = 2;
     @SuppressLint("HandlerLeak")
     private class AnimationHandler extends Handler {
         @Override
@@ -114,9 +118,23 @@ public class StageView extends View {
                 int r = mBubble.getRadius();
                 if (mBubble.getPositionY() + r < 2000) {
                     mBubbles.add(mBubble);
+                    mExpanding = mBubble;
+                    sendEmptyMessageDelayed(EXPAND, 0);
                 }
                 createBubble();
                 postInvalidate();
+                break;
+            case EXPAND:
+                if (mExpanding != null) {
+                    mExpanding.increaseRadius();
+                    if (mExpanding.getRadius() < 400) {
+                        sendEmptyMessageDelayed(EXPAND, 10);
+                    } else {
+                        mExpanding = null;
+                    }
+                    postInvalidate();
+                }
+                break;
             default:
                 break;
             }
@@ -124,7 +142,18 @@ public class StageView extends View {
     }
 
     void createBubble() {
-        mBubble = new Bubble(mContext, 720, 2200, 100, R.drawable.bubble);
+        int resource;
+        if (mColorIndex == 0) {
+            resource = R.drawable.bubble_green;
+        } else if (mColorIndex == 1) {
+            resource = R.drawable.bubble_blue;
+        } else if (mColorIndex == 2) {
+            resource = R.drawable.bubble_red;
+        } else {
+            resource = R.drawable.bubble_white;
+        }
+        mColorIndex = (mColorIndex + 1) % 4;
+        mBubble = new Bubble(mContext, 720, 2200, 100, resource);
         mBubble.moveTo(720, 2200);
     }
 
@@ -143,7 +172,12 @@ public class StageView extends View {
                     mBubbles.clear();
                     mIsClearing = true;
                 } else {
-                    createBubble();
+                    //createBubble();
+                    if (mBubble != null) {
+                        mBubble.moveTo(720, 2200);
+                    } else {
+                        createBubble();
+                    }
                 }
                 invalidate();
                 return true;
