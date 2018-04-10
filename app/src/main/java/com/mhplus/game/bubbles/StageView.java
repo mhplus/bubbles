@@ -28,25 +28,6 @@ public class StageView extends View {
     private AnimationHandler mHandler;
     private Context mContext;
 
-    /*
-    private OverScroller mScroller;
-    private static class OvershootInterpolator implements Interpolator {
-        private static final float DEFAULT_TENSION = 1.0f;
-        private float mTension;
-
-        OvershootInterpolator() {
-            mTension = DEFAULT_TENSION;
-        }
-
-        public float getInterpolation(float t) {
-            // _o(t) = t * t * ((tension + 1) * t + tension)
-            // o(t) = _o(t - 1) + 1
-            t -= 1.0f;
-            return t * t * ((mTension + 1) * t + mTension) + 1.0f;
-        }
-    }
-    */
-
     public StageView(Context context) {
         this(context, null, 0);
     }
@@ -58,21 +39,19 @@ public class StageView extends View {
     public StageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mContext = context;
-        //setHapticFeedbackEnabled(false);
         mHandler = new AnimationHandler();
-        //mScroller = new OverScroller(context, new OvershootInterpolator());
 
         final ViewConfiguration conf = ViewConfiguration.get(getContext());
         mMaximumVelocity = conf.getScaledMaximumFlingVelocity();
         mTracker = VelocityTracker.obtain();
         int borderColor = getResources().getColor(R.color.colorAccent, null);
-        mBorders.add(new Border(
+        mBorders.add(new Border(Border.BORDER_TYPE_BOTTOM,
                 0, 2000, 1440, 10, borderColor)); // bottom
-        mBorders.add(new Border(
+        mBorders.add(new Border(Border.BORDER_TYPE_TOP,
                 0, 0, 1440, 10, borderColor)); //top
-        mBorders.add(new Border(
+        mBorders.add(new Border(Border.BORDER_TYPE_LEFT,
                 0, 0, 10, 2000, borderColor)); //left
-        mBorders.add(new Border(
+        mBorders.add(new Border(Border.BORDER_TYPE_RIGHT,
                 1430, 0, 10, 2000, borderColor)); // right
 
         createBubble();
@@ -81,21 +60,13 @@ public class StageView extends View {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        mHandler.removeMessages(INVALIDATED);
+        mHandler.removeMessages(ANIMATION_FINISHED);
         Log.i(TAG, "onDetachedFromWindow::");
     }
 
     @Override
-    public void computeScroll() {
-        //mScroller.computeScrollOffset();
-        //int x = mScroller.getCurrX();
-        //int y = mScroller.getCurrY();
-        //Log.i(TAG, "computeScroll scroll X=" + x + ", y=" + y);
-        //postInvalidate();
-    }
-
-    @Override
     protected void onDraw(Canvas canvas) {
-        //canvas.translate(mScrollX, 0);
         for (Border d: mBorders) {
             d.draw(canvas);
         }
@@ -123,13 +94,13 @@ public class StageView extends View {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-            case INVALIDATED:
+            case INVALIDATED: {
                 mBubble.updateState();
                 if (!mBubble.isMoving()) {
                     sendEmptyMessageDelayed(ANIMATION_FINISHED, 200);
                     break;
                 }
-                for (Border b: mBorders) {
+                for (Border b : mBorders) {
                     if (b.isHit(mBubble)) {
                         mBubble.updateDirection(b);
                         break;
@@ -138,8 +109,12 @@ public class StageView extends View {
                 postInvalidate();
                 sendEmptyMessageDelayed(INVALIDATED, 1000 / 60);
                 break;
+            }
             case ANIMATION_FINISHED:
-                mBubbles.add(mBubble);
+                int r = mBubble.getRadius();
+                if (mBubble.getPositionY() + r < 2000) {
+                    mBubbles.add(mBubble);
+                }
                 createBubble();
                 postInvalidate();
             default:
@@ -163,33 +138,21 @@ public class StageView extends View {
         Log.d(TAG, "onTouchEvent x=" + x + ", y=" + y);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+                mActivePointerId = ev.getPointerId(0);
                 if (y < 2000) {
                     mBubbles.clear();
                     mIsClearing = true;
-                    if (mBubble == null) {
-                        createBubble();
-                    } else {
-                        mBubble.moveTo(720, 2200);
-                    }
-                    invalidate();
-                    return true;
+                } else {
+                    createBubble();
                 }
-                mBubble.moveTo(x, y);
-                mActivePointerId = ev.getPointerId(0);
-                //mPosX = x;
-                //mPosY = y;
                 invalidate();
                 return true;
             case MotionEvent.ACTION_MOVE:
                 if (mIsClearing) {
                     return true;
                 }
-                if (mBubble != null) {
-                    mBubble.moveTo(x, y);
-                    //mPosX = x;
-                    //mPosY = y;
-                    invalidate();
-                }
+                mBubble.moveTo(x, y);
+                invalidate();
                 return true;
         case MotionEvent.ACTION_UP:
         case MotionEvent.ACTION_CANCEL:
@@ -197,15 +160,13 @@ public class StageView extends View {
                 mIsClearing = false;
                 return true;
             }
-            if (mBubble != null) {
-                mTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                int velocityX = (int) mTracker.getXVelocity(mActivePointerId);
-                int velocityY = (int) mTracker.getYVelocity(mActivePointerId);
-                Log.i(TAG, "ACTION_UP velocityX=" + velocityX + ", velocityY=" + velocityY);
-                mBubble.run(velocityX, velocityY);
-                performClick();
-                mHandler.sendEmptyMessage(INVALIDATED);
-            }
+            mTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+            int velocityX = (int) mTracker.getXVelocity(mActivePointerId);
+            int velocityY = (int) mTracker.getYVelocity(mActivePointerId);
+            Log.i(TAG, "ACTION_UP velocityX=" + velocityX + ", velocityY=" + velocityY);
+            mBubble.run(velocityX, velocityY);
+            performClick();
+            mHandler.sendEmptyMessage(INVALIDATED);
             return true;
         }
         return super.onTouchEvent(ev);

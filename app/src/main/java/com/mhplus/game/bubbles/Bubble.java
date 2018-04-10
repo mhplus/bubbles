@@ -25,7 +25,7 @@ class Bubble {
         mDrawable = ContextCompat.getDrawable(context, id);
     }
 
-    boolean isHit(Border border) {
+    boolean isHit(Bubble b) {
         return false;
     }
 
@@ -42,28 +42,26 @@ class Bubble {
     }
 
     void updateDirection(Border border) {
-        int x = border.getPositionX();
-        int y = border.getPositionY();
-        int w = border.getWidth();
-        int h = border.getHeight();
-        if (y == 0 && h <= 10) { // top
+        int type = border.getType();
+        Log.i(TAG, "updateDirection borderType=" + type);
+        Log.i(TAG, "updateDirection mVelocityX=" + mVelocityX);
+        Log.i(TAG, "updateDirection mVelocityY=" + mVelocityY);
+        if (type == Border.BORDER_TYPE_TOP) {
             if (mVelocityY < 0) {
                 mVelocityY = -mVelocityY;
             }
-        } else if (x == 0 && w <= 10) { // left
+        } else if (type == Border.BORDER_TYPE_LEFT) {
             if (mVelocityX < 0) {
                 mVelocityX = -mVelocityX;
             }
-        } else if (x >= 1430 && w <= 10) { // right
+        } else if (type == Border.BORDER_TYPE_RIGHT) {
             if (mVelocityX > 0) {
                 mVelocityX = -mVelocityX;
             }
-        } else if (y == 2000 && h <= 10){ // bottom
+        } else {
             if (mVelocityY > 0) {
                 mVelocityY = -mVelocityY;
             }
-        } else {
-            // No update
         }
     }
 
