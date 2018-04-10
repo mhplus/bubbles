@@ -9,7 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-public class StaticDrawable extends Drawable {
+public class Border extends Drawable {
     private int mPosX;
     private int mPosY;
     private int mWidth;
@@ -17,7 +17,7 @@ public class StaticDrawable extends Drawable {
     private Paint mPaint = new Paint();
 
     @SuppressLint("ResourceAsColor")
-    StaticDrawable(int x, int y, int width, int height, int color) {
+    Border(int x, int y, int width, int height, int color) {
         super();
         mPosX = x;
         mPosY = y;
@@ -42,5 +42,38 @@ public class StaticDrawable extends Drawable {
     @Override
     public int getOpacity() {
         return PixelFormat.OPAQUE;
+    }
+
+    boolean isHit(Bubble bubble) {
+        int r = bubble.getRadius();
+        if (mPosY == 0 && mHeight <= 10) { // top
+            int top = bubble.getPositionY() - r;
+            return top <= mPosY + mHeight;
+        } else if (mPosX == 0 && mWidth <= 10) { // left
+            int left = bubble.getPositionX() - r;
+            return left <= mPosX + mWidth;
+        } else if (mPosX >= 1430 && mWidth <= 10) { // right
+            int right = bubble.getPositionX() + r;
+            return (right >= mPosX);
+        } else if (mPosY == 2000 && mHeight <= 10) {
+            int bottom = bubble.getPositionY() + r;
+            return bottom >= mPosY;
+        }
+        return false;
+    }
+    int getPositionX() {
+        return mPosX;
+    }
+
+    int getPositionY() {
+        return mPosY;
+    }
+
+    int getWidth() {
+        return mWidth;
+    }
+
+    int getHeight() {
+        return mHeight;
     }
 }
